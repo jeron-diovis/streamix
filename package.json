@@ -1,0 +1,20 @@
+{
+  "name": "reactive-flux",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "webpack",
+    "start": "webpack -w",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "most": "^0.18.1"
+  },
+  "devDependencies": {
+    "babel-loader": "^5.4.0",
+    "webpack": "^1.12.14"
+  }
+}
