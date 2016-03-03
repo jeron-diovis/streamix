@@ -8,7 +8,7 @@ module.exports = {
   entry: "index.js",
 
   output: {
-    path: sysPath.join(root, "build"),
+    path: sysPath.join(root, "dist"),
     filename: "index.js"
   },
 
