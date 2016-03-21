@@ -20,7 +20,11 @@ it("should create store", () => {
   dispatch("foo", 2);
   dispatch("bar", 10);
 
+  const listener = sinon.spy();
+  store.onValue(listener);
+
   assert.equal(handler.callCount, 2);
   assert.equal(handler.getCall(0).args[1], 1);
   assert.equal(handler.getCall(1).args[1], 2);
+  assert.deepEqual(listener.getCall(0).args[0], { foo: 3 });
 });
