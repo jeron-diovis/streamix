@@ -6,16 +6,23 @@ const noop = () => {};
 
 // ---
 
-function createStoreInternal(events$, handlers = {}, initialState = {}) {
-  // TODO: add update strategy function (last param). Make current strategy a default one.
-  // TODO: map filtered events, pass to scanner a handler function instead of event type
+function defaultUpdateStrategy(handler, state, payload) {
+  handler(state, payload);
+  return state;
+}
+
+// ---
+
+function createStoreInternal(
+  events$,
+  handlers = {},
+  initialState = {},
+  strategy = defaultUpdateStrategy
+) {
   return events$
     .filter(action => action.type in handlers)
     .scan(
-      (state, { type, payload }) => {
-        handlers[type](state, payload);
-        return state;
-      },
+      (state, { type, payload }) => strategy(handlers[type], state, payload),
       initialState
     )
     .onAny(noop); // ensure stream is activated and ready to accept events
