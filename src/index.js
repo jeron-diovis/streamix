@@ -28,7 +28,10 @@ export default function setup() {
 
   return {
     dispatch(type, payload) {
-      // TODO: check that `type` is not empty
+      if (type == null) {
+        throw new Error("[dispatch] Action type is empty");
+      }
+
       // TODO: prevent circular calls
       events$.emit({ type, payload });
       // no returned value

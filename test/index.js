@@ -28,3 +28,11 @@ it("should create store", () => {
   assert.equal(handler.getCall(1).args[1], 2);
   assert.deepEqual(listener.getCall(0).args[0], { foo: 3 });
 });
+
+
+it("should require non-empty action type", () => {
+  assert.throws(
+    () => dispatch(),
+    /Action type is empty/
+  )
+});
