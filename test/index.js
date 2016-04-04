@@ -6,7 +6,7 @@ beforeEach(() => {
   ({ dispatch, createStore } = setup());
 });
 
-it("should create store", () => {
+it("should create basic store", () => {
   const handler = sinon.spy((state, payload) => state.foo += payload);
 
   const store = createStore(
@@ -71,4 +71,28 @@ it("should allow custom update strategy for particular store", () => {
 
   assert.deepEqual(mutableObserver.firstCall.args[0], { foo: 3 }, "Mutable state is not shared across handlers calls");
   assert.deepEqual(immutableObserver.firstCall.args[0], { foo: 0 }, "Immutable state is shared across handlers calls");
+});
+
+
+it("should allow to define mapper stream for particular handler", () => {
+  const handler = sinon.spy((state, payload) => state.foo += payload);
+
+  const store = createStore(
+    {
+      foo: [
+        $ => $.filter(x => x > 2),
+        handler
+      ]
+    },
+    { foo: 0 }
+  );
+
+  const observer = sinon.spy();
+  store.onValue(observer);
+  dispatch("foo", 1);
+  dispatch("foo", 2);
+  dispatch("foo", 3);
+
+  assert.equal(handler.callCount, 1);
+  assert.deepEqual(observer.lastCall.args[0], { foo: 3 });
 });

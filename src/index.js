@@ -1,34 +1,5 @@
 import Bus from "kefir-bus";
-
-// ---
-
-const noop = () => {};
-
-// ---
-
-function defaultUpdateStrategy(handler, state, payload) {
-  handler(state, payload);
-  return state;
-}
-
-// ---
-
-function createStoreInternal(
-  events$,
-  handlers = {},
-  initialState = {},
-  strategy = defaultUpdateStrategy
-) {
-  return events$
-    .filter(action => action.type in handlers)
-    .scan(
-      (state, { type, payload }) => strategy(handlers[type], state, payload),
-      initialState
-    )
-    .onAny(noop); // ensure stream is activated and ready to accept events
-}
-
-// ---
+import createStore from "./createStore";
 
 export default function setup(options = {}) {
   const events$ = new Bus();
@@ -53,6 +24,6 @@ export default function setup(options = {}) {
       // no returned value
     },
 
-    createStore: (...args) => createStoreInternal(events$, ...args)
+    createStore: (...args) => createStore(events$, ...args)
   }
 }
