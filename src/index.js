@@ -30,17 +30,26 @@ function createStoreInternal(
 
 // ---
 
-export default function setup() {
+export default function setup(options = {}) {
   const events$ = new Bus();
+
+  if (options.onError) {
+    events$.onError(options.onError);
+  }
 
   return {
     dispatch(type, payload) {
       if (type == null) {
-        throw new Error("[dispatch] Action type is empty");
+        events$.error(new Error("[dispatch] Action type is empty"));
+        return;
       }
 
       // TODO: prevent circular calls
-      events$.emit({ type, payload });
+      try {
+        events$.emit({ type, payload });
+      } catch (e) {
+        events$.error(e);
+      }
       // no returned value
     },
 
