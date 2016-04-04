@@ -1,12 +1,18 @@
 import Bus from "kefir-bus";
 import createStore from "./createStore";
 
+// ---
+
+function defaultErrorHandler(e) {
+  throw e;
+}
+
+// ---
+
 export default function setup(options = {}) {
   const events$ = new Bus();
 
-  if (options.onError) {
-    events$.onError(options.onError);
-  }
+  events$.onError(options.onError || defaultErrorHandler);
 
   return {
     dispatch(type, payload) {

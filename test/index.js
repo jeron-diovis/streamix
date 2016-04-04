@@ -6,93 +6,101 @@ beforeEach(() => {
   ({ dispatch, createStore } = setup());
 });
 
-it("should create basic store", () => {
-  const handler = sinon.spy((state, payload) => state.foo += payload);
-
-  const store = createStore(
-    { foo: handler },
-    { foo: 0 }
+it("should require non-empty action type", () => {
+  assert.throws(() => dispatch(),
+    /Action type is empty/
   );
-
-  dispatch("foo", 1);
-  const observer = sinon.spy();
-  store.onValue(observer);
-  dispatch("foo", 2);
-  dispatch("bar", 10);
-
-  assert.equal(handler.callCount, 2);
-  assert.equal(handler.getCall(0).args[1], 1);
-  assert.equal(handler.getCall(1).args[1], 2);
-  assert.deepEqual(observer.lastCall.args[0], { foo: 3 });
 });
 
-it("should allow custom update strategy for particular store", () => {
-  const handler = sinon.spy((state, payload) => state.foo += payload);
+describe("store", () => {
+  it("should create basic store", () => {
+    const handler = sinon.spy((state, payload) => state.foo += payload);
 
-  function mutableStrategy(handler, state, payload) {
-    handler(state, payload);
-    return state;
-  }
+    const store = createStore(
+      { foo: handler },
+      { foo: 0 }
+    );
 
-  function immutableStrategy(handler, state, payload) {
-    const newState = Object.create(state);
-    handler(newState, payload);
-    return newState;
-  }
+    dispatch("foo", 1);
+    const observer = sinon.spy();
+    store.onValue(observer);
+    dispatch("foo", 2);
+    dispatch("bar", 10);
 
-  const handlers = { foo: handler };
+    assert.equal(handler.callCount, 2);
+    assert.equal(handler.getCall(0).args[1], 1);
+    assert.equal(handler.getCall(1).args[1], 2);
+    assert.deepEqual(observer.lastCall.args[0], { foo: 3 });
+  });
 
-  const mutableInitialState = { foo: 0 };
-  const immutableInitialState = { ...mutableInitialState };
+  it("should allow custom update strategy for particular store", () => {
+    const handler = sinon.spy((state, payload) => state.foo += payload);
 
-  const mutableStore = createStore(
-    handlers,
-    mutableInitialState,
-    mutableStrategy
-  );
+    function mutableStrategy(handler, state, payload) {
+      handler(state, payload);
+      return state;
+    }
 
-  const immutableStore = createStore(
-    handlers,
-    immutableInitialState,
-    immutableStrategy
-  );
+    function immutableStrategy(handler, state, payload) {
+      const newState = Object.create(state);
+      handler(newState, payload);
+      return newState;
+    }
 
-  const mutableObserver = sinon.spy();
-  mutableStore.onValue(mutableObserver);
+    const handlers = { foo: handler };
 
-  const immutableObserver = sinon.spy();
-  immutableStore.onValue(immutableObserver);
+    const mutableInitialState = { foo: 0 };
+    const immutableInitialState = { ...mutableInitialState };
 
-  dispatch("foo", 1);
-  dispatch("foo", 2);
+    const mutableStore = createStore(
+      handlers,
+      mutableInitialState,
+      mutableStrategy
+    );
 
-  assert.equal(mutableObserver.lastCall.args[0], mutableInitialState, "Mutable initial state is not changed");
-  assert.notEqual(immutableObserver.lastCall.args[0], immutableInitialState, "Immutable initial state is changed");
+    const immutableStore = createStore(
+      handlers,
+      immutableInitialState,
+      immutableStrategy
+    );
 
-  assert.deepEqual(mutableObserver.firstCall.args[0], { foo: 3 }, "Mutable state is not shared across handlers calls");
-  assert.deepEqual(immutableObserver.firstCall.args[0], { foo: 0 }, "Immutable state is shared across handlers calls");
-});
+    const mutableObserver = sinon.spy();
+    mutableStore.onValue(mutableObserver);
+
+    const immutableObserver = sinon.spy();
+    immutableStore.onValue(immutableObserver);
+
+    dispatch("foo", 1);
+    dispatch("foo", 2);
+
+    assert.equal(mutableObserver.lastCall.args[0], mutableInitialState, "Mutable initial state is not changed");
+    assert.notEqual(immutableObserver.lastCall.args[0], immutableInitialState, "Immutable initial state is changed");
+
+    assert.deepEqual(mutableObserver.firstCall.args[0], { foo: 3 }, "Mutable state is not shared across handlers calls");
+    assert.deepEqual(immutableObserver.firstCall.args[0], { foo: 0 }, "Immutable state is shared across handlers calls");
+  });
 
 
-it("should allow to define mapper stream for particular handler", () => {
-  const handler = sinon.spy((state, payload) => state.foo += payload);
+  it("should allow to define mapper stream for particular handler", () => {
+    const handler = sinon.spy((state, payload) => state.foo += payload);
 
-  const store = createStore(
-    {
-      foo: [
-        $ => $.filter(x => x > 2),
-        handler
-      ]
-    },
-    { foo: 0 }
-  );
+    const store = createStore(
+      {
+        foo: [
+          $ => $.filter(x => x > 2),
+          handler
+        ]
+      },
+      { foo: 0 }
+    );
 
-  const observer = sinon.spy();
-  store.onValue(observer);
-  dispatch("foo", 1);
-  dispatch("foo", 2);
-  dispatch("foo", 3);
+    const observer = sinon.spy();
+    store.onValue(observer);
+    dispatch("foo", 1);
+    dispatch("foo", 2);
+    dispatch("foo", 3);
 
-  assert.equal(handler.callCount, 1);
-  assert.deepEqual(observer.lastCall.args[0], { foo: 3 });
+    assert.equal(handler.callCount, 1);
+    assert.deepEqual(observer.lastCall.args[0], { foo: 3 });
+  });
 });
