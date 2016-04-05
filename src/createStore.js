@@ -12,10 +12,10 @@ function parseHandler(payloads$, val) {
   return initMapper(payloads$).map(payload => ({ payload, handler }));
 }
 
-function composeHandlersStream(events$, handlersMap) {
+function composeHandlersStream(actions$, handlersMap) {
   return Kefir.merge(
     Object.keys(handlersMap).map(actionType => parseHandler(
-      events$.filter(({ type }) => type === actionType).map(({ payload }) => payload),
+      actions$.filter(({ type }) => type === actionType).map(({ payload }) => payload),
       handlersMap[actionType]
     ))
   );
@@ -31,13 +31,13 @@ function defaultUpdateStrategy(handler, state, payload) {
 // ---
 
 export default function createStoreInternal(
-  events$,
+  actions$,
   handlers = {},
   initialState = {},
   strategy = defaultUpdateStrategy
 ) {
   return (
-    composeHandlersStream(events$.filter(({ type }) => type in handlers), handlers)
+    composeHandlersStream(actions$.filter(({ type }) => type in handlers), handlers)
     .scan(
       (state, { handler, payload }) => strategy(handler, state, payload),
       initialState

@@ -88,7 +88,7 @@ describe("store", () => {
     const store = app.createStore(
       {
         foo: [
-            $ => $.filter(x => x > 2),
+          $ => $.filter(x => x > 2),
           handler
         ]
       },
