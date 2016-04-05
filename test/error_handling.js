@@ -1,17 +1,23 @@
 import setup from "../src";
 
-let dispatch, createStore;
-
 describe("error handling", () => {
+  let app;
+
+  afterEach(() => {
+    app.close();
+    app = null;
+  });
+
+  // ---
+
   describe("without onError handler", () => {
     beforeEach(() => {
-      ({ dispatch, createStore } = setup());
-
-      createStore({ foo() { throw new Error("test error"); } });
+      app = setup();
+      app.createStore({ foo() { throw new Error("test error"); } });
     });
 
     it("should throw errors by default", () => {
-      assert.throws(() => dispatch("foo"), /test error/);
+      assert.throws(() => app.dispatch("foo"), /test error/);
     });
   });
 
@@ -21,14 +27,13 @@ describe("error handling", () => {
 
     beforeEach(() => {
       onError = sinon.spy(e => "we have a problem");
+      app = setup({ onError });
 
-      ({ dispatch, createStore } = setup({ onError }));
-
-      createStore({ foo() { throw new Error("test error"); } });
+      app.createStore({ foo() { throw new Error("test error"); } });
     });
 
     it("should catch errors and pass to onError handler", () => {
-      assert.doesNotThrow(() => dispatch("foo"));
+      assert.doesNotThrow(() => app.dispatch("foo"));
       assert.equal(onError.callCount, 1);
       assert.isTrue(onError.firstCall.returned("we have a problem"));
     });

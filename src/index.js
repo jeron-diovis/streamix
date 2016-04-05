@@ -3,16 +3,23 @@ import createStore from "./createStore";
 
 // ---
 
-function defaultErrorHandler(e) {
-  throw e;
-}
+const defaultOptions = {
+  onError(e) {
+    throw e;
+  },
+
+  abortNestedDispatch: true
+};
 
 // ---
 
-export default function setup(options = {}) {
-  const events$ = new Bus();
+export default function setup(rawOptions = {}) {
+  const options = { ...defaultOptions, ...rawOptions };
 
-  events$.onError(options.onError || defaultErrorHandler);
+  const events$ = new Bus();
+  events$.onError(options.onError);
+
+  let dispatching;
 
   return {
     dispatch(type, payload) {
@@ -21,15 +28,35 @@ export default function setup(options = {}) {
         return;
       }
 
-      // TODO: prevent circular calls
+      if (dispatching) {
+        events$.error(new Error(
+          `[dispatch] A "dispatch(${type})" was called, but "dispatch(${dispatching})" is already executing.\n`
+          + (options.abortNestedDispatch
+            ? `Handling of "dispatch(${type})" is aborted.`
+            : `This potentially means circular updates and should be avoided.`)
+        ));
+
+        if (options.abortNestedDispatch) {
+          return;
+        }
+      }
+
+      dispatching = type;
+
       try {
         events$.emit({ type, payload });
       } catch (e) {
         events$.error(e);
+      } finally {
+        dispatching = null;
       }
       // no returned value
     },
 
-    createStore: (...args) => createStore(events$, ...args)
+    createStore: (...args) => createStore(events$, ...args),
+
+    close() {
+      events$.end();
+    }
   }
 }
