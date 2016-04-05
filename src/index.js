@@ -29,7 +29,10 @@ export default function setup(rawOptions = {}) {
       options.abortNestedDispatch
     ),
 
-    createStore: createStoresFactory(actions$, options.defaultStoreUpdateStrategy),
+    createStore: createStoresFactory(
+      actions$.ignoreErrors(), // stores are not interested in top-level app errors
+      options.defaultStoreUpdateStrategy
+    ),
 
     close() {
       actions$.end();

@@ -1,3 +1,4 @@
+import Bus from "kefir-bus";
 import { merge as merge$ } from "kefir";
 import { defaultMutableStrategy } from "./storeUpdateStrategies";
 
@@ -30,13 +31,25 @@ export default function createStore(
   initialState = {},
   strategy = defaultMutableStrategy
 ) {
+  const errors$ = new Bus();
   return (
     composeHandlersStream(actions$.filter(({ type }) => type in handlers), handlers)
     .scan(
-      (state, { handler, payload }) => strategy(handler, state, payload),
+      (state, { handler, payload }) => {
+        try {
+          return strategy(handler, state, payload);
+        } catch (e) {
+          // .scan should not return errors, because it will reset it's state
+          // @link https://github.com/rpominov/kefir/blob/c7870c6289d15a6037d8f0470229f03b04a23e56/src%2Fone-source%2Fscan.js#L22-L23
+          errors$.error(e);
+          return state;
+        }
+      },
       initialState
     )
-    .onAny(noop) // ensure stream is activated and ready to accept events
+    .merge(errors$)
+    .toProperty() // store always has a current value
+    .onAny(noop) // activate stream immediately, so store will receive all dispatched actions
   );
 }
 

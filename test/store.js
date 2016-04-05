@@ -107,27 +107,17 @@ describe("store", () => {
 
     it("should allow to set default update strategy for all app stores", () => {
       app = setup({
-        defaultStoreUpdateStrategy: function immutableTransactionalStrategy(handler, state, payload) {
-          try {
-            const newState = Object.create(state);
-            handler(newState, payload);
-            return newState;
-          } catch (e) {
-            return state;
-          }
+        defaultStoreUpdateStrategy: function immutableStrategy(handler, state, payload) {
+          const newState = Object.create(state);
+          handler(newState, payload);
+          return newState;
         }
       });
 
       const initialState = { foo: 0 };
 
       const store = app.createStore(
-        {
-          foo: (state, payload) => state.foo += payload,
-          bar(state) {
-            state.bar = true;
-            throw new Error("test error");
-          }
-        },
+        { foo: (state, payload) => state.foo += payload },
         initialState
       );
 
@@ -135,13 +125,11 @@ describe("store", () => {
       store.onValue(observer);
 
       app.dispatch("foo", 1);
-      app.dispatch("bar");
       app.dispatch("foo", 2);
 
       const finalState = observer.lastCall.args[0];
       assert.deepEqual(finalState, { foo: 3 });
       assert.notEqual(finalState, initialState);
-      assert.notProperty(finalState, "bar");
     });
   });
 });
