@@ -1,6 +1,7 @@
 import Bus from "kefir-bus";
-import createStore from "./createStore";
 import createDispatch from "./createDispatch";
+import { createStoresFactory } from "./createStore";
+import { defaultMutableStrategy } from "./storeUpdateStrategies";
 
 // ---
 
@@ -9,7 +10,8 @@ const defaultOptions = {
     throw e;
   },
 
-  abortNestedDispatch: true
+  abortNestedDispatch: true,
+  defaultStoreUpdateStrategy: defaultMutableStrategy
 };
 
 // ---
@@ -27,7 +29,7 @@ export default function setup(rawOptions = {}) {
       options.abortNestedDispatch
     ),
 
-    createStore: (...args) => createStore(actions$, ...args),
+    createStore: createStoresFactory(actions$, options.defaultStoreUpdateStrategy),
 
     close() {
       actions$.end();

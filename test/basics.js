@@ -21,7 +21,7 @@ describe("basics", () => {
   });
 
   describe("nested dispatching", () => {
-    it("should abort processing of nested `dispatch` calls", () => {
+    it("should abort processing of nested `dispatch` calls by default", () => {
       const onError = sinon.spy();
 
       app = setup({ onError });

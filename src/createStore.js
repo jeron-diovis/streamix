@@ -1,4 +1,5 @@
-import Kefir from "kefir";
+import { merge as merge$ } from "kefir";
+import { defaultMutableStrategy } from "./storeUpdateStrategies";
 
 // ---
 
@@ -13,7 +14,7 @@ function parseHandler(payloads$, val) {
 }
 
 function composeHandlersStream(actions$, handlersMap) {
-  return Kefir.merge(
+  return merge$(
     Object.keys(handlersMap).map(actionType => parseHandler(
       actions$.filter(({ type }) => type === actionType).map(({ payload }) => payload),
       handlersMap[actionType]
@@ -23,18 +24,11 @@ function composeHandlersStream(actions$, handlersMap) {
 
 // ---
 
-function defaultUpdateStrategy(handler, state, payload) {
-  handler(state, payload);
-  return state;
-}
-
-// ---
-
-export default function createStoreInternal(
+export default function createStore(
   actions$,
   handlers = {},
   initialState = {},
-  strategy = defaultUpdateStrategy
+  strategy = defaultMutableStrategy
 ) {
   return (
     composeHandlersStream(actions$.filter(({ type }) => type in handlers), handlers)
@@ -44,4 +38,18 @@ export default function createStoreInternal(
     )
     .onAny(noop) // ensure stream is activated and ready to accept events
   );
+}
+
+
+export function createStoresFactory(
+  actions$,
+  defaultStrategy = defaultMutableStrategy
+) {
+  return function storesFactory(
+    handlers,
+    initialState,
+    strategy = defaultStrategy
+  ) {
+    return createStore(actions$, handlers, initialState, strategy);
+  };
 }
