@@ -39,7 +39,7 @@ describe("error handling", () => {
 
     beforeEach(() => {
       app = setup({
-        defaultStoreUpdateStrategy: simpleImmutableStrategy
+        defaultUpdateStrategy: simpleImmutableStrategy
       });
     });
 

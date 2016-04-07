@@ -20,13 +20,33 @@ describe("store", () => {
     const observer = sinon.spy();
     store.onValue(observer);
 
-    assert.equal(observer.callCount, 1, "Observer is not called");
+    assert.equal(observer.callCount, 1, "Observer is not called on subscription");
     assert.deepEqual(observer.firstCall.args[0], { foo: 0 }, "Observer does not receive current state");
   });
 
 
-  it("should process actions", () => {
+  it("should react to actions only when it has handlers for it", () => {
+    const fooStore = app.createStore();
+    const fooObserver = sinon.spy();
+
+    const barStore = app.createStore({
+      foo() {}
+    });
+    const barObserver = sinon.spy();
+
+    fooStore.onValue(fooObserver);
+    barStore.onValue(barObserver);
+
+    app.dispatch("foo");
+
+    assert.equal(fooObserver.callCount, 1);
+    assert.equal(barObserver.callCount, 2);
+  });
+
+
+  it("should process actions dispatched before first subscriber added", () => {
     const handler = sinon.spy((state, payload) => state.foo += payload);
+    const observer = sinon.spy();
 
     const store = app.createStore(
       { foo: handler },
@@ -34,14 +54,10 @@ describe("store", () => {
     );
 
     app.dispatch("foo", 1);
-    const observer = sinon.spy();
     store.onValue(observer);
     app.dispatch("foo", 2);
-    app.dispatch("bar", 10);
 
     assert.equal(handler.callCount, 2);
-    assert.equal(handler.getCall(0).args[1], 1);
-    assert.equal(handler.getCall(1).args[1], 2);
     assert.deepEqual(observer.lastCall.args[0], { foo: 3 });
   });
 
@@ -70,78 +86,44 @@ describe("store", () => {
   });
 
   describe("update strategies", () => {
-    it("should allow custom update strategy for particular store", () => {
-      const handler = sinon.spy((state, payload) => state.foo += payload);
-
-      function mutableStrategy(handler, state, payload) {
-        handler(state, payload);
-        return state;
-      }
-
-      function immutableStrategy(handler, state, payload) {
-        const newState = Object.create(state);
-        handler(newState, payload);
-        return newState;
-      }
-
-      const handlers = { foo: handler };
-
-      const mutableInitialState = { foo: 0 };
-      const immutableInitialState = { foo: 0 };
-
-      const mutableStore = app.createStore(
-        handlers,
-        mutableInitialState,
-        mutableStrategy
-      );
-
-      const immutableStore = app.createStore(
-        handlers,
-        immutableInitialState,
-        immutableStrategy
-      );
-
-      const mutableObserver = sinon.spy();
-      mutableStore.onValue(mutableObserver);
-
-      const immutableObserver = sinon.spy();
-      immutableStore.onValue(immutableObserver);
-
-      app.dispatch("foo", 1);
-      app.dispatch("foo", 2);
-
-      assert.equal(mutableObserver.lastCall.args[0], mutableInitialState, "Mutable initial state is not changed");
-      assert.notEqual(immutableObserver.lastCall.args[0], immutableInitialState, "Immutable initial state is changed");
-
-      assert.deepEqual(mutableObserver.firstCall.args[0], { foo: 3 }, "Mutable state is not shared across handlers calls");
-      assert.deepEqual(immutableObserver.firstCall.args[0], { foo: 0 }, "Immutable state is shared across handlers calls");
-    });
-
-    it("should allow to set default update strategy for all app stores", () => {
+    it("should allow to set default strategy for all stores and personal strategy for each particular store", () => {
       app = setup({
-        defaultStoreUpdateStrategy: function immutableStrategy(handler, state, payload) {
+        defaultUpdateStrategy: function simpleImmutableStrategy(handler, state, payload) {
           const newState = Object.create(state);
           handler(newState, payload);
           return newState;
         }
       });
 
-      const initialState = { foo: 0 };
+      const defaultInitialState = { foo: 0 };
 
-      const store = app.createStore(
+      const defaultObserver = sinon.spy();
+      const customObserver = sinon.spy();
+
+      const defaultStore = app.createStore(
         { foo: (state, payload) => state.foo += payload },
-        initialState
+        defaultInitialState
       );
 
-      const observer = sinon.spy();
-      store.onValue(observer);
+      const customStore = app.createStore(
+        { foo: (state, payload) => state + payload },
+        0,
+        (handler, state, payload) => handler(state, payload)
+      );
+
+      defaultStore.onValue(defaultObserver);
+      customStore.onValue(customObserver);
 
       app.dispatch("foo", 1);
       app.dispatch("foo", 2);
 
-      const finalState = observer.lastCall.args[0];
-      assert.deepEqual(finalState, { foo: 3 });
-      assert.notEqual(finalState, initialState);
+      const defaultFinalState = defaultObserver.lastCall.args[0];
+      const customFinalState = customObserver.lastCall.args[0];
+
+      assert.deepEqual(defaultFinalState, { foo: 3 });
+      assert.notEqual(defaultFinalState, defaultInitialState);
+
+      assert.equal(customFinalState, 3);
     });
   });
 });

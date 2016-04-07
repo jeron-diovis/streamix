@@ -1,4 +1,3 @@
-import Bus from "kefir-bus";
 import { merge as $merge, constant as $constant, pool } from "kefir";
 import { defaultMutableStrategy } from "./storeUpdateStrategies";
 
@@ -18,6 +17,7 @@ function parseHandler(payloads$, val) {
   const [ initMapper, handler ] = (Array.isArray(val) ? val : [ identity, val ]);
   return initMapper(payloads$).map(payload => ({ payload, handler }));
 }
+
 
 function composeHandlersStream(actions$, handlersMap) {
   return $merge(
@@ -67,18 +67,27 @@ export default function createStore(
   );
 }
 
+
 export function createStoresFactory(
   actions$,
-  defaultStrategy = defaultMutableStrategy
+  {
+    middleware = identity,
+    defaultUpdateStrategy = defaultMutableStrategy
+  } = {}
 ) {
-  const middleware = createTransactionsMiddleware(actions$);
+  const useTransactions = createTransactionsMiddleware(actions$);
 
   return function storesFactory(
     handlers,
     initialState,
-    strategy = defaultStrategy
+    strategy = defaultUpdateStrategy
   ) {
-    return middleware(createStore(actions$, handlers, initialState, strategy));
+    return (
+      middleware(useTransactions(createStore(actions$, handlers, initialState, strategy)))
+        // always call `.toProperty` to force store to have a current state,
+        // no matter what middleware does with it
+        .toProperty(constant(initialState))
+    );
   };
 }
 
@@ -88,7 +97,7 @@ function createTransactionsMiddleware(actions$) {
   let storesCount = 0;
   const storesPool$ = pool();
   const transactions$ = storesPool$
-    // wait for all stores
+    // wait for all existing stores
     .bufferWithCount({ valueOf: () => storesCount }) // dynamic buffer size
     // ensure all stores has successfully processed action
     .map(conjAll)
@@ -113,7 +122,5 @@ function createTransactionsMiddleware(actions$) {
       // In array should be 0 or 1 values (i.e. store either processed current action or not).
       // `.flatten` won't emit if array is empty
       .flatten()
-      // ensure store still always has a current state (`.flatten` turns it into steam mode)
-      .toProperty();
   };
 }

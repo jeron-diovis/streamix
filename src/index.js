@@ -2,6 +2,7 @@ import Bus from "kefir-bus";
 import createDispatch from "./createDispatch";
 import { createStoresFactory } from "./createStore";
 import { defaultMutableStrategy } from "./storeUpdateStrategies";
+import combineMiddleware from "./combineMiddleware";
 
 // ---
 
@@ -11,31 +12,47 @@ const defaultOptions = {
   },
 
   abortNestedDispatch: true,
-  defaultStoreUpdateStrategy: defaultMutableStrategy
+  defaultUpdateStrategy: defaultMutableStrategy,
+  appMiddleware: [],
+  storeMiddleware: []
 };
+
+function subject() {
+  const bus = new Bus();
+  return {
+    emitter: bus,
+    stream: bus.changes() // create new stream with bus methods removed
+  };
+}
 
 // ---
 
 export default function setup(rawOptions = {}) {
   const options = { ...defaultOptions, ...rawOptions };
+  const { stream, emitter } = subject();
 
-  const actions$ = new Bus();
+  const actions$ = combineMiddleware(options.appMiddleware)(stream);
+
+  // TODO: move this logic to middleware, remove `onError` option
   actions$.onError(options.onError);
 
   return {
     dispatch: createDispatch(
-      actions$.emit,
-      actions$.error,
+      emitter.emit,
+      emitter.error,
       options.abortNestedDispatch
     ),
 
     createStore: createStoresFactory(
       actions$.ignoreErrors(), // stores are not interested in top-level app errors
-      options.defaultStoreUpdateStrategy
+      {
+        defaultUpdateStrategy: options.defaultUpdateStrategy,
+        middleware: combineMiddleware(options.storeMiddleware)
+      }
     ),
 
     close() {
-      actions$.end();
+      emitter.end();
     }
   }
 }
