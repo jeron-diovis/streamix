@@ -14,7 +14,18 @@ describe("store", () => {
 
   // ---
 
-  it("should create basic store", () => {
+  it("should invoke observer with current state immediately as it added", () => {
+    const store = app.createStore({}, { foo: 0 });
+
+    const observer = sinon.spy();
+    store.onValue(observer);
+
+    assert.equal(observer.callCount, 1, "Observer is not called");
+    assert.deepEqual(observer.firstCall.args[0], { foo: 0 }, "Observer does not receive current state");
+  });
+
+
+  it("should process actions", () => {
     const handler = sinon.spy((state, payload) => state.foo += payload);
 
     const store = app.createStore(
@@ -33,6 +44,7 @@ describe("store", () => {
     assert.equal(handler.getCall(1).args[1], 2);
     assert.deepEqual(observer.lastCall.args[0], { foo: 3 });
   });
+
 
   it("should allow to define mapper stream for particular handler", () => {
     const handler = sinon.spy((state, payload) => state.foo += payload);
@@ -75,7 +87,7 @@ describe("store", () => {
       const handlers = { foo: handler };
 
       const mutableInitialState = { foo: 0 };
-      const immutableInitialState = { ...mutableInitialState };
+      const immutableInitialState = { foo: 0 };
 
       const mutableStore = app.createStore(
         handlers,

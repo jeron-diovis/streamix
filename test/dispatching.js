@@ -1,6 +1,6 @@
 import setup from "../src";
 
-describe("basics", () => {
+describe("dispatching", () => {
   let app;
 
   beforeEach(() => {

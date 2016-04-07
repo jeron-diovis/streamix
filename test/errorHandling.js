@@ -44,8 +44,8 @@ describe("error handling", () => {
     });
 
     describe("should keep previous state when particular handler throws", () => {
-      it("for single store", () => {
 
+      it("for single store", () => {
         const store = app.createStore(
           {
             foo: (state, payload) => state.foo += payload,
@@ -101,6 +101,7 @@ describe("error handling", () => {
         assert.deepEqual(fooObserver.lastCall.args[0], { foo: 1 });
         assert.deepEqual(barObserver.lastCall.args[0], { bar: 2, foo_bar: 1 });
       });
+
     });
   });
 });
