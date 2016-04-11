@@ -29,10 +29,10 @@ describe("dispatching", () => {
       const barHandler = sinon.spy();
 
       app.createStore({
-        foo() {
+        foo: $ => $.map(() => {
           app.dispatch("bar");
-        },
-        bar: barHandler
+        }),
+        bar: $ => $.map(barHandler)
       });
 
       app.dispatch("foo");
@@ -53,10 +53,10 @@ describe("dispatching", () => {
       const barHandler = sinon.spy();
 
       app.createStore({
-        foo() {
+        foo: $ => $.map(() => {
           app.dispatch("bar");
-        },
-        bar: barHandler
+        }),
+        bar: $ => $.map(barHandler)
       });
 
       app.dispatch("foo");

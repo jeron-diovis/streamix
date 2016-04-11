@@ -23,7 +23,7 @@ describe("error handling", () => {
   it("should not pass store-level errors to app-level handler", () => {
     const onError = sinon.spy();
     app = setup({ onError });
-    app.createStore({ foo() { throw new Error("test error"); } });
+    app.createStore({ foo: $ => $.map(() => { throw new Error("test error"); }) });
 
     assert.doesNotThrow(() => app.dispatch("foo"));
     assert.isFalse(onError.called);
@@ -31,28 +31,20 @@ describe("error handling", () => {
 
   describe("transactions", () => {
 
-    function simpleImmutableStrategy(handler, state, payload) {
-      const newState = Object.create(state);
-      handler(newState, payload);
-      return newState;
-    }
-
     beforeEach(() => {
-      app = setup({
-        defaultUpdateStrategy: simpleImmutableStrategy
-      });
+      app = setup();
     });
 
-    describe("should keep previous state when particular handler throws", () => {
+    describe("should keep previous state when particular handler throws (when using immutable data)", () => {
 
       it("for single store", () => {
         const store = app.createStore(
           {
-            foo: (state, payload) => state.foo += payload,
-            bar(state) {
+            foo: $ => $.map(([ state, payload ]) => ({ ...state, foo: state.foo + payload })),
+            bar: $ => $.map(state => {
               state.bar = true;
               throw new Error("test error");
-            }
+            })
           },
           { foo: 0 }
         );
@@ -74,20 +66,20 @@ describe("error handling", () => {
 
         const storeFoo = app.createStore(
           {
-            foo: (state, payload) => {
-              state.foo += payload;
+            foo: $ => $.map(([ state, payload ]) => {
               if (payload > 1) {
                 throw new Error("test error");
               }
-            }
+              return { ...state, foo: state.foo + payload };
+            })
           },
           { foo: 0 }
         ).onValue(fooObserver);
 
         const storeBar = app.createStore(
           {
-            bar: (state, payload) => state.bar += payload,
-            foo: (state, payload) => state.foo_bar += payload
+            bar: $ => $.map(([ state, payload ]) => ({ ...state, bar: state.bar + payload })),
+            foo: $ => $.map(([ state, payload ]) => ({ ...state, foo_bar: state.foo_bar + payload }))
           },
           { bar: 0, foo_bar: 0 }
         ).onValue(barObserver);

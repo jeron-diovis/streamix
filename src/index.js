@@ -1,7 +1,6 @@
 import Bus from "kefir-bus";
 import createDispatch from "./createDispatch";
 import { createStoresFactory } from "./createStore";
-import { defaultMutableStrategy } from "./storeUpdateStrategies";
 import combineMiddleware from "./combineMiddleware";
 
 // ---
@@ -12,7 +11,6 @@ const defaultOptions = {
   },
 
   abortNestedDispatch: true,
-  defaultUpdateStrategy: defaultMutableStrategy,
   appMiddleware: [],
   storeMiddleware: []
 };
@@ -45,10 +43,7 @@ export default function setup(rawOptions = {}) {
 
     createStore: createStoresFactory(
       actions$.ignoreErrors(), // stores are not interested in top-level app errors
-      {
-        defaultUpdateStrategy: options.defaultUpdateStrategy,
-        middleware: combineMiddleware(options.storeMiddleware)
-      }
+      { middleware: combineMiddleware(options.storeMiddleware) }
     ),
 
     close() {

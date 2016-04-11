@@ -46,7 +46,7 @@ describe("middleware", () => {
       });
 
       app.createStore({
-        foo() { throw new Error("test error"); }
+        foo: $ => $.map(() => { throw new Error("test error"); })
       });
 
       app.dispatch("foo");
@@ -63,9 +63,7 @@ describe("middleware", () => {
         ]
       });
 
-      const store = app.createStore({
-        foo() {}
-      });
+      const store = app.createStore({ foo: $ => $ });
 
       app.dispatch("foo");
 
@@ -104,7 +102,7 @@ describe("middleware", () => {
     // everything should still work,
     // even though nothing middleware has returned nothing instead of actions stream
     const spy = sinon.spy();
-    app.createStore({ foo() {} }).onValue(spy);
+    app.createStore({ foo: $ => $ }).onValue(spy);
     app.dispatch("foo");
     assert.equal(spy.callCount, 2);
   });
