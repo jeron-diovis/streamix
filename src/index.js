@@ -1,6 +1,6 @@
 import Bus from "kefir-bus";
 import createDispatch from "./createDispatch";
-import { createStoresFactory } from "./createStore";
+import createStoresFactory from "./createStoresFactory";
 import combineMiddleware from "./combineMiddleware";
 
 // ---
