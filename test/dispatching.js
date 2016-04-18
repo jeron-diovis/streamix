@@ -24,7 +24,9 @@ describe("dispatching", () => {
     it("should abort processing of nested `dispatch` calls by default", () => {
       const onError = sinon.spy();
 
-      app = setup({ onError });
+      app = setup({
+        appMiddleware: [ $ => $.onError(onError) ]
+      });
 
       const barHandler = sinon.spy();
 
@@ -46,7 +48,7 @@ describe("dispatching", () => {
       const onError = sinon.spy();
 
       app = setup({
-        onError,
+        appMiddleware: [ $ => $.onError(onError) ],
         abortNestedDispatch: false
       });
 

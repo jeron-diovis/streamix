@@ -3,6 +3,7 @@ import {
   pool
 } from "kefir";
 
+import combineMiddleware from "./combineMiddleware";
 import createStore from "./createStore";
 
 // ---
@@ -18,13 +19,16 @@ const conjAll = ar => ar.every(identity);
 
 export default function createStoresFactory(
   actions$,
-  { middleware = identity } = {}
+  { middleware = [] } = {}
 ) {
-  const useTransactions = createTransactionsMiddleware(actions$);
+  const withMiddleware = combineMiddleware([
+    createTransactionsMiddleware(actions$),
+    ...middleware
+  ]);
 
   return function storesFactory(reducerInitializers, initialState) {
     return (
-      middleware(useTransactions(createStore(actions$, reducerInitializers, initialState)))
+      withMiddleware(createStore(actions$, reducerInitializers, initialState))
         // always call `.toProperty` to force store to have a current state,
         // no matter what middleware does with it
         .toProperty(constant(initialState))

@@ -12,7 +12,9 @@ describe("error handling", () => {
 
   it("should allow to intercept top-level app errors", () => {
     const onError = sinon.spy(e => "we have a problem");
-    app = setup({ onError });
+    app = setup({
+      appMiddleware: [ $ => $.onError(onError) ]
+    });
 
     assert.doesNotThrow(() => app.dispatch());
     assert.equal(onError.callCount, 1, "'onError' handler is not called");
@@ -22,7 +24,9 @@ describe("error handling", () => {
 
   it("should not pass store-level errors to app-level handler", () => {
     const onError = sinon.spy();
-    app = setup({ onError });
+    app = setup({
+      appMiddleware: [ $ => $.onError(onError) ]
+    });
     app.createStore({ foo: $ => $.map(() => { throw new Error("test error"); }) });
 
     assert.doesNotThrow(() => app.dispatch("foo"));

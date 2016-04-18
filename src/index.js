@@ -5,14 +5,12 @@ import combineMiddleware from "./combineMiddleware";
 
 // ---
 
-const defaultOptions = {
-  onError(e) {
-    throw e;
-  },
+const defaultErrorHandler = $ => $.onError(e => { throw e; });
 
-  abortNestedDispatch: true,
-  appMiddleware: [],
-  storeMiddleware: []
+const defaultOptions = {
+  appMiddleware: [ defaultErrorHandler ],
+  storeMiddleware: [],
+  abortNestedDispatch: true
 };
 
 function subject() {
@@ -31,9 +29,6 @@ export default function setup(rawOptions = {}) {
 
   const actions$ = combineMiddleware(options.appMiddleware)(stream);
 
-  // TODO: move this logic to middleware, remove `onError` option
-  actions$.onError(options.onError);
-
   return {
     dispatch: createDispatch(
       emitter.emit,
@@ -43,7 +38,7 @@ export default function setup(rawOptions = {}) {
 
     createStore: createStoresFactory(
       actions$.ignoreErrors(), // stores are not interested in top-level app errors
-      { middleware: combineMiddleware(options.storeMiddleware) }
+      { middleware: options.storeMiddleware }
     ),
 
     close() {
