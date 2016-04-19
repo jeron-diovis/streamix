@@ -15,6 +15,10 @@ export default function createStore(
   actions$,
   reducerInitializers,
   initialState = {}
+  /* TODO:
+  , {
+    middleware = [], // use it as reducer middleware (before initializer)
+  } = {}*/
 ) {
   const stateSources = pool();
 
@@ -37,6 +41,7 @@ export default function createStore(
   createReducers(
     // whatever happens inside reducer, don't allow for exceptions to ruin app:
     // catch everything and pass to store's errors channel
+    // TODO: caught exceptions should not be passed to reducers. Or, maybe, wrap each reducer to `catchErrors` separately
     catchErrors(reducerParams$),
     reducerInitializers
   ).forEach(x => stateSources.plug(x));
@@ -59,10 +64,7 @@ function catchErrors(stream$) {
 
 function createReducers(params$, initializers) {
   return Object.keys(initializers).map(actionType => initReducer(
-    params$
-      .filter(([ state, { type } ]) => type === actionType)
-      // TODO: leaving just payload is not compatible with Standard Flux Actions. Need to deal with `error` and `meta` props.
-      .map(([ state, { payload } ]) => [ state, payload ]),
+    params$.filter(([ state, { type } ]) => type === actionType),
     initializers[actionType],
     actionType // just for debugging
   ));

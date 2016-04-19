@@ -44,9 +44,8 @@ describe("error handling", () => {
       it("for single store", () => {
         const store = app.createStore(
           {
-            foo: $ => $.map(([ state, payload ]) => ({ ...state, foo: state.foo + payload })),
-            bar: $ => $.map(state => {
-              state.bar = true;
+            foo: $ => $.map(([ state, { payload } ]) => ({ ...state, foo: state.foo + payload })),
+            bar: $ => $.map(() => {
               throw new Error("test error");
             })
           },
@@ -70,7 +69,7 @@ describe("error handling", () => {
 
         const storeFoo = app.createStore(
           {
-            foo: $ => $.map(([ state, payload ]) => {
+            foo: $ => $.map(([ state, { payload } ]) => {
               if (payload > 1) {
                 throw new Error("test error");
               }
@@ -82,8 +81,8 @@ describe("error handling", () => {
 
         const storeBar = app.createStore(
           {
-            bar: $ => $.map(([ state, payload ]) => ({ ...state, bar: state.bar + payload })),
-            foo: $ => $.map(([ state, payload ]) => ({ ...state, foo_bar: state.foo_bar + payload }))
+            bar: $ => $.map(([ state, { payload } ]) => ({ ...state, bar: state.bar + payload })),
+            foo: $ => $.map(([ state, { payload } ]) => ({ ...state, foo_bar: state.foo_bar + payload }))
           },
           { bar: 0, foo_bar: 0 }
         ).onValue(barObserver);

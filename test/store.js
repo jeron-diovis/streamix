@@ -43,7 +43,7 @@ describe("store", () => {
 
 
   it("should process actions dispatched before first subscriber added", () => {
-    const handler = sinon.spy(([ state, payload ]) => {
+    const handler = sinon.spy(([ state, { payload } ]) => {
       state.foo += payload;
       return state;
     });

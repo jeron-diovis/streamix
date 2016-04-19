@@ -10,6 +10,7 @@ const defaultErrorHandler = $ => $.onError(e => { throw e; });
 const defaultOptions = {
   appMiddleware: [ defaultErrorHandler ],
   storeMiddleware: [],
+  // TODO: reducerMiddleware: [],
   abortNestedDispatch: true
 };
 
