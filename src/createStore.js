@@ -38,10 +38,7 @@ export default function createStore(
   );
 
   createReducers(
-    // whatever happens inside reducer, don't allow for exceptions to ruin app:
-    // catch everything and pass to store's errors channel
-    // TODO: caught exceptions should not be passed to reducers. Or, maybe, wrap each reducer to `catchErrors` separately
-    catchErrors(reducerParams$),
+    reducerParams$,
     reducerInitializers,
     combineMiddleware(middleware)
   ).forEach(x => stateSources.plug(x));
@@ -51,16 +48,6 @@ export default function createStore(
 
 
 // ---
-
-function catchErrors(stream$) {
-  return stream$.withHandler((emitter, event) => {
-    try {
-      emitter.emitEvent(event);
-    } catch (e) {
-      emitter.error(e);
-    }
-  });
-}
 
 function createReducers(params$, initializers, middleware) {
   return Object.keys(initializers).map(actionType => initReducer(
@@ -72,11 +59,23 @@ function createReducers(params$, initializers, middleware) {
 }
 
 function initReducer(params$, initializer, middleware, actionType) {
-  const reducer = initializer(middleware(params$));
+  // Whatever happens inside reducer, don't allow for exceptions to ruin app.
+  // So catch everything and pass to errors channel
+  const reducer = initializer(middleware(catchErrors(params$)));
 
   if (!(reducer instanceof Stream)) {
     throw new Error(`[init reducer '${actionType}'] Initializer should return stream, but got ${reducer}`);
   }
 
   return reducer;
+}
+
+function catchErrors(stream$) {
+  return stream$.withHandler((emitter, event) => {
+    try {
+      emitter.emitEvent(event);
+    } catch (e) {
+      emitter.error(e);
+    }
+  });
 }

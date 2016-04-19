@@ -23,15 +23,39 @@ describe("error handling", () => {
 
 
   it("should not pass store-level errors to app-level handler", () => {
-    const onError = sinon.spy();
+    const onAppError = sinon.spy();
+    const onStoreError = sinon.spy();
+
     app = setup({
-      appMiddleware: [ $ => $.onError(onError) ]
+      appMiddleware: [ $ => $.onError(onAppError) ]
     });
-    app.createStore({ foo: $ => $.map(() => { throw new Error("test error"); }) });
+    const store = app.createStore({ foo: $ => $.map(() => { throw new Error("test error"); }) });
+    store.onError(onStoreError);
 
     assert.doesNotThrow(() => app.dispatch("foo"));
-    assert.isFalse(onError.called);
+
+    assert.isFalse(onAppError.called);
+    assert.isTrue(onStoreError.called);
+    assert.equal(onStoreError.firstCall.args[0].message, "test error");
   });
+
+
+  it("should isolate errors in reducers", () => {
+    const onFooError = sinon.spy();
+    const onBarError = sinon.spy();
+
+    app = setup();
+
+    app.createStore({
+      foo: $ => $.map(() => { throw new Error("test error"); }).onError(onFooError),
+      bar: $ => $.onError(onBarError),
+    });
+
+    app.dispatch("foo");
+    assert.isTrue(onFooError.called, "thrown error was not passed to reducer's errors channel");
+    assert.isFalse(onBarError.called, "error from one reducer was passed to another one");
+  });
+
 
   describe("transactions", () => {
 
