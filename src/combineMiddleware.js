@@ -16,12 +16,8 @@ function parse(middleware) {
   return function parsedMiddleware(stream) {
     const res = middleware(stream);
 
-    if (res === undefined) {
-      return stream;
-    }
-
     if (!(res instanceof Stream)) {
-      throw new Error(`[combine middleware: ${middleware.name}] Middleware must return either stream or undefined, but got ${res}`);
+      throw new Error(`[combine middleware] Middleware must return a stream, but got ${res}`);
     }
 
     return res;

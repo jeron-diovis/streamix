@@ -11,7 +11,7 @@ describe("middleware", () => {
       app = null;
     });
 
-    it("should use 'appMiddleware' option", () => {
+    it("should use 'appMiddleware' option to patch actions stream", () => {
       const spy = sinon.spy();
 
       app = setup({
@@ -33,15 +33,12 @@ describe("middleware", () => {
       app = null;
     });
 
-    it("should use 'storeMiddleware' option", () => {
+    it("should use 'storeMiddleware' option to patch store output stream", () => {
       const spy = sinon.spy();
 
       app = setup({
         storeMiddleware: [
-          $ => {
-            $.onError(spy);
-            // don't return
-          }
+          $ => $.onError(spy)
         ]
       });
 
@@ -53,6 +50,51 @@ describe("middleware", () => {
 
       assert.equal(spy.callCount, 1, "spy from store middleware was not called");
     });
+
+
+    it("should use 'reducerMiddleware' option to patch each store's reducer input stream", () => {
+      const fooSpy = sinon.spy();
+      const barSpy = sinon.spy();
+
+      app = setup({
+        reducerMiddleware: [
+          $ => $.map(([ state, { payload } ]) => payload)
+        ]
+      });
+
+      app.createStore({
+        foo: $ => $.onValue(fooSpy),
+        bar: $ => $.onValue(barSpy)
+      });
+
+      app.dispatch("foo", 1);
+      app.dispatch("bar", 2);
+
+      assert.isTrue(fooSpy.calledWithExactly(1));
+      assert.isTrue(barSpy.calledWithExactly(2));
+    });
+
+
+    it("should concat 'reducerMiddleware' array from stores factory with own 'middleware' array for particular store", () => {
+      const spy = sinon.spy();
+
+      app = setup({
+        reducerMiddleware: [
+          $ => $.map(([ state, { payload } ]) => payload)
+        ]
+      });
+
+      app.createStore(
+        { foo: $ => $.onValue(spy) },
+        undefined,
+        { middleware: [ $ => $.map(x => x * 2) ] }
+      );
+
+      app.dispatch("foo", 42);
+
+      assert.isTrue(spy.calledWithExactly(84));
+    });
+
 
     it("should ensure that store always has a current value", () => {
       const spy = sinon.spy();
@@ -84,26 +126,7 @@ describe("middleware", () => {
           ]
         })
       },
-      /Middleware must return either stream or undefined/
+      /Middleware must return a stream/
     );
-  });
-
-  it("should use source stream if middleware returns undefined", () => {
-    assert.doesNotThrow(
-      () => {
-        app = setup({
-          appMiddleware: [
-            $ => {}
-          ]
-        });
-      }
-    );
-
-    // everything should still work,
-    // even though nothing middleware has returned nothing instead of actions stream
-    const spy = sinon.spy();
-    app.createStore({ foo: $ => $ }).onValue(spy);
-    app.dispatch("foo");
-    assert.equal(spy.callCount, 2);
   });
 });

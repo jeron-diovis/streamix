@@ -19,19 +19,30 @@ const conjAll = ar => ar.every(identity);
 
 export default function createStoresFactory(
   actions$,
-  { middleware = [] } = {} // TODO: should be store middleware and reducer middleware
+  {
+    storeMiddleware = [],
+    reducerMiddleware = [],
+  } = {}
 ) {
   const withMiddleware = combineMiddleware([
     createTransactionsMiddleware(actions$),
-    ...middleware
+    ...storeMiddleware
   ]);
 
-  return function storesFactory(reducerInitializers, initialState) { // TODO: pass options to `createStore`
+  return function storesFactory(
+    reducerInitializers,
+    initialState,
+    { middleware = [] } = {}
+  ) {
     return (
-      withMiddleware(createStore(actions$, reducerInitializers, initialState))
-        // always call `.toProperty` to force store to have a current state,
-        // no matter what middleware does with it
-        .toProperty(constant(initialState))
+      withMiddleware(
+        createStore(actions$, reducerInitializers, initialState, {
+          middleware: [ ...reducerMiddleware, ...middleware ]
+        })
+      )
+      // always call `.toProperty` to force store to have a current state,
+      // no matter what middleware does with it
+      .toProperty(constant(initialState))
     );
   };
 }

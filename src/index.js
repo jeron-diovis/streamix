@@ -10,7 +10,7 @@ const defaultErrorHandler = $ => $.onError(e => { throw e; });
 const defaultOptions = {
   appMiddleware: [ defaultErrorHandler ],
   storeMiddleware: [],
-  // TODO: reducerMiddleware: [],
+  reducerMiddleware: [],
   abortNestedDispatch: true
 };
 
@@ -39,7 +39,10 @@ export default function setup(rawOptions = {}) {
 
     createStore: createStoresFactory(
       actions$.ignoreErrors(), // stores are not interested in top-level app errors
-      { middleware: options.storeMiddleware }
+      {
+        storeMiddleware: options.storeMiddleware,
+        reducerMiddleware: options.reducerMiddleware
+      }
     ),
 
     close() {

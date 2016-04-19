@@ -4,6 +4,8 @@ import {
   Stream
 } from "kefir";
 
+import combineMiddleware from "./combineMiddleware";
+
 // ---
 
 const noop = () => {};
@@ -14,11 +16,8 @@ const noop = () => {};
 export default function createStore(
   actions$,
   reducerInitializers,
-  initialState = {}
-  /* TODO:
-  , {
-    middleware = [], // use it as reducer middleware (before initializer)
-  } = {}*/
+  initialState = {},
+  { middleware = [] } = {}
 ) {
   const stateSources = pool();
 
@@ -43,7 +42,8 @@ export default function createStore(
     // catch everything and pass to store's errors channel
     // TODO: caught exceptions should not be passed to reducers. Or, maybe, wrap each reducer to `catchErrors` separately
     catchErrors(reducerParams$),
-    reducerInitializers
+    reducerInitializers,
+    combineMiddleware(middleware)
   ).forEach(x => stateSources.plug(x));
 
   return state$;
@@ -62,16 +62,17 @@ function catchErrors(stream$) {
   });
 }
 
-function createReducers(params$, initializers) {
+function createReducers(params$, initializers, middleware) {
   return Object.keys(initializers).map(actionType => initReducer(
     params$.filter(([ state, { type } ]) => type === actionType),
     initializers[actionType],
+    middleware,
     actionType // just for debugging
   ));
 }
 
-function initReducer(params$, initializer, actionType) {
-  const reducer = initializer(params$);
+function initReducer(params$, initializer, middleware, actionType) {
+  const reducer = initializer(middleware(params$));
 
   if (!(reducer instanceof Stream)) {
     throw new Error(`[init reducer '${actionType}'] Initializer should return stream, but got ${reducer}`);
