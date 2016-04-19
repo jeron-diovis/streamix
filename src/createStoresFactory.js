@@ -1,15 +1,10 @@
-import {
-  constant as $constant,
-  pool
-} from "kefir";
+import { constant as $constant, pool } from "kefir";
 
 import combineMiddleware from "./combineMiddleware";
 import createStore from "./createStore";
+import { identity, constant } from "./utils";
 
 // ---
-
-const identity = x => x;
-const constant = x => () => x;
 
 const returnTrue = constant(true);
 const returnFalse$ = constant($constant(false));

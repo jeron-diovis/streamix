@@ -1,17 +1,8 @@
-import {
-  combine as $combine,
-  pool,
-  Stream
-} from "kefir";
-
+import { combine as $combine, pool } from "kefir";
+import { isStream, noop } from "./utils";
 import combineMiddleware from "./combineMiddleware";
 
 // ---
-
-const noop = () => {};
-
-// ---
-
 
 export default function createStore(
   actions$,
@@ -63,7 +54,7 @@ function initReducer(params$, initializer, middleware, actionType) {
   // So catch everything and pass to errors channel
   const reducer = initializer(middleware(catchErrors(params$)));
 
-  if (!(reducer instanceof Stream)) {
+  if (!isStream(reducer)) {
     throw new Error(`[init reducer '${actionType}'] Initializer should return stream, but got ${reducer}`);
   }
 
