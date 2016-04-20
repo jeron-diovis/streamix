@@ -20,6 +20,10 @@ describe("dispatching", () => {
     );
   });
 
+  /*it("WHAT. THE. HELL?!", () => {
+    app.dispatch();
+  });*/
+
   describe("nested dispatching", () => {
     it("should abort processing of nested `dispatch` calls by default", () => {
       const onError = sinon.spy();
