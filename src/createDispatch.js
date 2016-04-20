@@ -1,7 +1,7 @@
 export default function createDispatch(emitData, emitError, abortNestedDispatch = true) {
   let dispatching;
 
-  // TODO: accept SFA-action as a single param; accept function as action creator
+  // TODO: accept FSA as a single param
   return function dispatch(actionType, payload) {
     if (actionType == null) {
       emitError(new Error("[dispatch] Action type is empty"));
