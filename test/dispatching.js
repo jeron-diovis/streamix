@@ -20,9 +20,11 @@ describe("dispatching", () => {
     );
   });
 
-  /*it("WHAT. THE. HELL?!", () => {
-    app.dispatch();
-  });*/
+  it("WHAT. THE. HELL?!", () => {
+    assert.throws(() => app.dispatch(),
+      /Action type is empty/
+    );
+  });
 
   describe("nested dispatching", () => {
     it("should abort processing of nested `dispatch` calls by default", () => {
