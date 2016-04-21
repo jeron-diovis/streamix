@@ -6,7 +6,7 @@ var testsRoot = sysPath.join(root, "test");
 module.exports = function (config) {
   config.set({
     singleRun: true,
-    browsers: [ "PhantomJS" ],
+    browsers: [ "Chrome" ],
     frameworks: [ "mocha", "chai-sinon" ],
     reporters: [ "mocha" ],
     files: [
