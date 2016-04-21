@@ -42,7 +42,7 @@ export default function createStore(
 
 function createReducers(params$, initializers, middleware) {
   return Object.keys(initializers).map(actionType => initReducer(
-    params$.filter(([ state, { type } ]) => type === actionType),
+    params$.filter(([ , { type } ]) => type === actionType),
     initializers[actionType],
     middleware,
     actionType // just for debugging

@@ -72,6 +72,6 @@ function createTransactionsMiddleware(actions$) {
       .filterBy(transactions$)
       // In array should be 0 or 1 values (i.e. store either processed current action or not).
       // `.flatten` won't emit if array is empty
-      .flatten()
+      .flatten();
   };
 }

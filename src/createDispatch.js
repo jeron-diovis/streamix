@@ -1,5 +1,5 @@
 export default function createDispatch(emitData, emitError, abortNestedDispatch = true) {
-  let stack = [];
+  const stack = [];
 
   return function dispatch(...args) {
     const action = createAction(...args);
@@ -21,7 +21,7 @@ export default function createDispatch(emitData, emitError, abortNestedDispatch 
         `[dispatch] A "dispatch(${actionType})" was called, but "dispatch(${stack[stack.length - 1]})" is already executing.\n`
         + (abortNestedDispatch
           ? `Handling of "dispatch(${actionType})" will be aborted.`
-          : `This potentially means circular updates and should be avoided.`)
+          : "This potentially means circular updates and should be avoided.")
       ));
 
       if (abortNestedDispatch) {

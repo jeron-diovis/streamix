@@ -48,5 +48,5 @@ export default function setup(rawOptions = {}) {
     close() {
       emitter.end();
     }
-  }
+  };
 }
