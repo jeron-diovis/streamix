@@ -20,11 +20,26 @@ describe("dispatching", () => {
     );
   });
 
-  /*it("WHAT. THE. HELL?!", () => {
-    assert.throws(() => app.dispatch(),
+  it("should accept FSA as a single param", () => {
+    const spy = sinon.spy();
+
+    app.createStore({
+      foo: $ => $.map(spy)
+    });
+
+    app.dispatch({ type: "foo", payload: 42 });
+
+    assert.isTrue(spy.calledOnce);
+    assert.deepEqual(spy.firstCall.args[0][1], { type: "foo", payload: 42 });
+
+    assert.throws(() => app.dispatch({ type: "foo" }, 42),
+      /If action object is used, no other arguments should be passed/
+    );
+
+    assert.throws(() => app.dispatch({ payload: "42" }),
       /Action type is empty/
     );
-  });*/
+  });
 
   describe("nested dispatching", () => {
     it("should abort processing of nested `dispatch` calls by default", () => {
